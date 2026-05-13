@@ -1,11 +1,8 @@
 import argparse
 import asyncio
 import logging
-import os
-from pathlib import Path
 
-import yaml
-
+from src.config import read_feeds, read_settings
 from src.db import NewsDB
 from src.fetcher import fetch_all_feeds
 from src.summarizer import Summarizer
@@ -20,40 +17,6 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
-
-BASE_DIR = Path(__file__).parent
-
-
-def load_config():
-    with open(BASE_DIR / "config" / "feeds.yaml") as f:
-        feeds_cfg = yaml.safe_load(f)
-    with open(BASE_DIR / "config" / "settings.yaml") as f:
-        settings = yaml.safe_load(f)
-
-    # 环境变量覆盖（用于 GitHub Actions secrets）
-    env_map = {
-        "ANTHROPIC_API_KEY": ("summarizer", "anthropic", "api_key"),
-        "ANTHROPIC_BASE_URL": ("summarizer", "anthropic", "base_url"),
-        "OPENAI_API_KEY": ("summarizer", "openai", "api_key"),
-        "OPENAI_BASE_URL": ("summarizer", "openai", "base_url"),
-        "TELEGRAM_BOT_TOKEN": ("push", "telegram", "bot_token"),
-        "TELEGRAM_CHAT_ID": ("push", "telegram", "chat_id"),
-        "BARK_DEVICE_KEY": ("push", "bark", "device_key"),
-        "BARK_SERVER_URL": ("push", "bark", "server_url"),
-        "WECOM_WEBHOOK_URL": ("push", "wecom", "webhook_url"),
-        "WPS_WEBHOOK_URL": ("push", "wps", "webhook_url"),
-        "LARK_WEBHOOK_URL": ("push", "lark", "webhook_url"),
-        "LARK_SECRET": ("push", "lark", "secret"),
-    }
-    for env_key, path in env_map.items():
-        val = os.environ.get(env_key)
-        if val:
-            d = settings
-            for k in path[:-1]:
-                d = d[k]
-            d[path[-1]] = val
-
-    return feeds_cfg, settings
 
 
 async def push_digest(digest: str, settings: dict):
@@ -103,13 +66,14 @@ async def push_digest(digest: str, settings: dict):
 
 
 async def run(args):
-    feeds_cfg, settings = load_config()
+    settings = read_settings()
     fetch_settings = settings["fetch"]
+    all_feeds = read_feeds()
 
     db = NewsDB(settings["database"]["path"])
 
-    active_feeds = [f for f in feeds_cfg["feeds"] if f.get("enabled", True)]
-    logger.info("Fetching feeds (%d/%d enabled)...", len(active_feeds), len(feeds_cfg["feeds"]))
+    active_feeds = [f for f in all_feeds if f.get("enabled", True)]
+    logger.info("Fetching feeds (%d/%d enabled)...", len(active_feeds), len(all_feeds))
     articles = await fetch_all_feeds(
         feeds=active_feeds,
         max_age_hours=fetch_settings["max_age_hours"],

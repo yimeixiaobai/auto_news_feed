@@ -4,21 +4,17 @@ from pathlib import Path
 
 import feedparser
 import httpx
-import yaml
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from src.config import read_feeds, write_feeds, read_settings, write_settings, BASE_DIR
 from src.db import NewsDB
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-BASE_DIR = Path(__file__).parent
-FEEDS_PATH = BASE_DIR / "config" / "feeds.yaml"
-SETTINGS_PATH = BASE_DIR / "config" / "settings.yaml"
 
 app = FastAPI(title="AI News Feed Console")
 app.add_middleware(
@@ -27,28 +23,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-# ── helpers ──────────────────────────────────────────────
-
-def read_feeds() -> list[dict]:
-    with open(FEEDS_PATH) as f:
-        return yaml.safe_load(f).get("feeds", [])
-
-
-def write_feeds(feeds: list[dict]):
-    with open(FEEDS_PATH, "w") as f:
-        yaml.dump({"feeds": feeds}, f, allow_unicode=True, default_flow_style=False)
-
-
-def read_settings() -> dict:
-    with open(SETTINGS_PATH) as f:
-        return yaml.safe_load(f)
-
-
-def write_settings(settings: dict):
-    with open(SETTINGS_PATH, "w") as f:
-        yaml.dump(settings, f, allow_unicode=True, default_flow_style=False)
 
 
 # ── models ───────────────────────────────────────────────
