@@ -1109,7 +1109,7 @@ select {
             <div class="step-num" id="sn-push">3</div>
             <div class="step-body">
               <h4>设置推送渠道</h4>
-              <p>选择通过飞书、企业微信或 Telegram 接收每日新闻摘要</p>
+              <p>选择通过 WPS 协作、飞书、企业微信或 Telegram 接收每日新闻摘要</p>
             </div>
             <div class="step-status" id="ss-push">未配置</div>
           </div>
@@ -1563,6 +1563,7 @@ async function toggleFeed(idx) {
   if (d.ok) {
     feeds = d.feeds;
     renderFeeds();
+    updateDashboard();
     toast(d.enabled ? `${feeds[idx].name} 已启用` : `${feeds[idx].name} 已禁用`, 'info');
   }
 }
