@@ -1,0 +1,31 @@
+database:
+  path: data/news.db
+fetch:
+  max_age_hours: 24
+  max_articles_per_feed: 10
+  timeout_seconds: 30
+push:
+  enabled:
+  - wps
+  lark:
+    secret: ''
+    webhook_url: ''
+  telegram:
+    bot_token: ''
+    chat_id: ''
+  wecom:
+    webhook_url: ''
+  wps:
+    webhook_url: https://xz.wps.cn/api/v1/webhook/send?key=b5e24d831f687f0f7a3cd58c421704ad
+summarizer:
+  anthropic:
+    api_key: dummy
+    base_url: http://localhost:4141
+    model: claude-sonnet-4
+  language: zh-CN
+  top_n: 15
+  openai:
+    api_key: dummy
+    base_url: http://localhost:4141/v1
+    model: gpt-5.4
+  provider: openai
