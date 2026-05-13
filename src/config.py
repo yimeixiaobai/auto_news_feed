@@ -60,6 +60,16 @@ def read_settings() -> dict:
                 d = d.setdefault(k, {})
             d[path[-1]] = val
 
+    push_enabled = os.environ.get("PUSH_ENABLED")
+    if push_enabled:
+        settings.setdefault("push", {})["enabled"] = [
+            x.strip() for x in push_enabled.split(",") if x.strip()
+        ]
+
+    provider = os.environ.get("SUMMARIZER_PROVIDER")
+    if provider:
+        settings.setdefault("summarizer", {})["provider"] = provider
+
     return settings
 
 
