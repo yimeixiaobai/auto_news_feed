@@ -882,6 +882,106 @@ select {
   opacity: 0.3;
 }
 
+/* ══ HINTS ══════════════════════════════════════════ */
+
+.fg-hint {
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+/* ══ DASHBOARD ══════════════════════════════════════ */
+
+.setup-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setup-step {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.15s;
+}
+
+.setup-step:hover {
+  border-color: var(--border-active);
+  background: var(--surface-hover);
+}
+
+.step-num {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--amber-dim);
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.3s, color 0.3s;
+}
+
+.step-num.done {
+  background: var(--green-dim);
+  color: var(--green);
+}
+
+.step-body { flex: 1; min-width: 0; }
+
+.step-body h4 {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.step-body p {
+  font-size: 12px;
+  color: var(--text2);
+  margin: 0;
+}
+
+.step-status {
+  font-size: 12px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+
+.step-status.ok { color: var(--green); }
+
+.workflow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.wf-step { text-align: center; padding: 12px 16px; }
+
+.wf-icon { font-size: 26px; margin-bottom: 6px; }
+
+.wf-label { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+
+.wf-desc { font-size: 11px; color: var(--text2); }
+
+.wf-arrow { font-size: 18px; color: var(--text3); }
+
+@media (max-width: 768px) {
+  .workflow { flex-direction: column; gap: 4px; }
+  .wf-arrow { transform: rotate(90deg); }
+}
+
 /* ══ SCROLLBAR ═══════════════════════════════════════ */
 
 ::-webkit-scrollbar { width: 6px; }
@@ -932,7 +1032,11 @@ select {
     </div>
 
     <nav class="sidebar-nav">
-      <button class="nav-item active" data-panel="feeds">
+      <button class="nav-item active" data-panel="home">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        首页
+      </button>
+      <button class="nav-item" data-panel="feeds">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="20" r="1"/></svg>
         信息源
       </button>
@@ -977,10 +1081,77 @@ select {
   <!-- ── MAIN CONTENT ──────────────────────────── -->
   <div class="main">
 
+    <!-- HOME -->
+    <div class="panel active" id="panel-home">
+      <div class="page-title">欢迎使用 AI 新闻聚合</div>
+      <div class="page-desc">自动抓取新闻 → AI 智能筛选生成摘要 → 推送到你的聊天工具。按下面的步骤完成配置即可开始使用。</div>
+
+      <div class="card">
+        <div class="card-head"><h3>配置向导</h3></div>
+        <div class="setup-steps">
+          <div class="setup-step" onclick="goPanel('feeds')">
+            <div class="step-num" id="sn-feeds">1</div>
+            <div class="step-body">
+              <h4>添加信息源</h4>
+              <p>添加你想关注的新闻网站，系统会自动定期抓取最新文章</p>
+            </div>
+            <div class="step-status" id="ss-feeds">未配置</div>
+          </div>
+          <div class="setup-step" onclick="goPanel('model')">
+            <div class="step-num" id="sn-model">2</div>
+            <div class="step-body">
+              <h4>配置 AI 模型</h4>
+              <p>填入 API 密钥，系统将使用 AI 自动筛选重要新闻并生成摘要</p>
+            </div>
+            <div class="step-status" id="ss-model">未配置</div>
+          </div>
+          <div class="setup-step" onclick="goPanel('push')">
+            <div class="step-num" id="sn-push">3</div>
+            <div class="step-body">
+              <h4>设置推送渠道</h4>
+              <p>选择通过飞书、企业微信或 Telegram 接收每日新闻摘要</p>
+            </div>
+            <div class="step-status" id="ss-push">未配置</div>
+          </div>
+          <div class="setup-step" onclick="goPanel('run')">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <h4>运行一次试试</h4>
+              <p>手动运行一次确认一切正常，之后可设置定时自动运行</p>
+            </div>
+            <div class="step-status">点击前往 →</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>工作流程</h3></div>
+        <div class="workflow">
+          <div class="wf-step">
+            <div class="wf-icon">📡</div>
+            <div class="wf-label">抓取新闻</div>
+            <div class="wf-desc">从各个信息源获取最新文章</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-step">
+            <div class="wf-icon">🤖</div>
+            <div class="wf-label">AI 智能筛选</div>
+            <div class="wf-desc">精选重要内容并生成中文摘要</div>
+          </div>
+          <div class="wf-arrow">→</div>
+          <div class="wf-step">
+            <div class="wf-icon">📬</div>
+            <div class="wf-label">推送消息</div>
+            <div class="wf-desc">发送到你的飞书/微信/TG</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- FEEDS -->
-    <div class="panel active" id="panel-feeds">
+    <div class="panel" id="panel-feeds">
       <div class="page-title">信息源管理</div>
-      <div class="page-desc">添加、编辑和测试 RSS / Atom 订阅源。点击测试按钮验证源的连通性。</div>
+      <div class="page-desc">管理你关注的新闻来源。添加后可点击测试按钮检查是否能正常连接。</div>
       <div class="card">
         <div class="card-head">
           <h3>已配置的信息源</h3>
@@ -996,7 +1167,7 @@ select {
     <!-- MODEL -->
     <div class="panel" id="panel-model">
       <div class="page-title">模型配置</div>
-      <div class="page-desc">配置用于文章摘要生成的 AI 模型。支持 Anthropic 和 OpenAI 两种协议。</div>
+      <div class="page-desc">配置用于智能筛选和生成新闻摘要的 AI 模型。需要从 AI 服务商获取 API 密钥。</div>
       <div class="card">
         <div class="card-head">
           <h3>API 连接</h3>
@@ -1038,11 +1209,11 @@ select {
         </div>
         <div class="fg-row">
           <div class="fg">
-            <label>Base URL（留空使用官方地址）</label>
+            <label>API 地址（可选）</label>
             <input type="text" id="cfg-base-url" placeholder="https://api.anthropic.com">
           </div>
           <div class="fg">
-            <label>每期精选条数（Top N）</label>
+            <label>每次推送条数</label>
             <input type="number" id="cfg-top-n" value="15" min="1" max="50">
           </div>
         </div>
@@ -1053,7 +1224,7 @@ select {
     <!-- PUSH -->
     <div class="panel" id="panel-push">
       <div class="page-title">推送渠道</div>
-      <div class="page-desc">配置消息推送渠道，保存后可发送测试消息验证连通性。</div>
+      <div class="page-desc">选择你希望通过哪些工具接收新闻推送。配置完成后可发送测试消息确认是否正常。</div>
 
       <div class="card" style="margin-bottom:24px">
         <div class="card-head">
@@ -1158,16 +1329,16 @@ select {
     <!-- GENERAL -->
     <div class="panel" id="panel-general">
       <div class="page-title">通用设置</div>
-      <div class="page-desc">配置 RSS 抓取行为和数据库存储路径。</div>
+      <div class="page-desc">调整新闻抓取的参数，一般使用默认值即可，无需修改。</div>
       <div class="card">
         <div class="card-head"><h3>抓取参数</h3></div>
         <div class="fg-row">
           <div class="fg">
-            <label>最大文章时效（小时）</label>
+            <label>文章有效期（小时）</label>
             <input type="number" id="cfg-max-age" value="24" min="1" max="168">
           </div>
           <div class="fg">
-            <label>请求超时（秒）</label>
+            <label>连接超时（秒）</label>
             <input type="number" id="cfg-timeout" value="30" min="5" max="120">
           </div>
         </div>
@@ -1188,12 +1359,12 @@ select {
     <!-- RUN -->
     <div class="panel" id="panel-run">
       <div class="page-title">手动运行</div>
-      <div class="page-desc">手动触发一次完整的「抓取 → 摘要 → 推送」流程。</div>
+      <div class="page-desc">手动触发一次完整流程：抓取新闻 → AI 生成摘要 → 推送到聊天工具。首次建议勾选「预览模式」先看看效果。</div>
       <div class="card">
         <div class="card-head"><h3>运行选项</h3></div>
         <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:20px;">
-          <label class="check-label"><input type="checkbox" id="run-dry" checked> 预览模式（仅输出，不推送）</label>
-          <label class="check-label"><input type="checkbox" id="run-no-summary"> 跳过 AI 摘要</label>
+          <label class="check-label"><input type="checkbox" id="run-dry" checked> 预览模式（只看结果，不实际推送消息）</label>
+          <label class="check-label"><input type="checkbox" id="run-no-summary"> 跳过 AI 摘要（仅抓取，不调用 AI）</label>
         </div>
         <button class="btn btn-primary" id="btn-run" onclick="manualRun()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -1237,8 +1408,9 @@ select {
       <input type="text" id="modal-name" placeholder="例：OpenAI 博客">
     </div>
     <div class="fg">
-      <label>RSS / Atom 地址</label>
+      <label>订阅地址（RSS / Atom）</label>
       <input type="text" id="modal-url" placeholder="https://...">
+      <div class="fg-hint">新闻网站的 RSS 订阅链接，通常以 /feed 或 /rss 结尾</div>
     </div>
     <div class="fg-row">
       <div class="fg">
@@ -1779,10 +1951,103 @@ CHANNELS.forEach(ch => {
   if (cb) cb.addEventListener('change', syncChannelBlocks);
 });
 
+/* ── Panel navigation ─────────────────── */
+function goPanel(name) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const btn = document.querySelector(`.nav-item[data-panel="${name}"]`);
+  const panel = document.getElementById(`panel-${name}`);
+  if (btn) btn.classList.add('active');
+  if (panel) panel.classList.add('active');
+  if (name === 'articles') loadArticles();
+}
+
+/* ── Hint injection ──────────────────── */
+const FIELD_HINTS = {
+  'cfg-api-key': '从 AI 服务商的控制台获取，如 Anthropic Console 或 OpenAI Platform',
+  'cfg-model': '选择用于生成摘要的 AI 模型，不同模型效果和费用不同',
+  'cfg-base-url': '使用官方 API 可留空；如使用代理或第三方兼容服务，填入对应地址',
+  'cfg-top-n': '每次运行时从所有抓取到的文章中精选多少条生成摘要并推送',
+  'push-wps-url': '在 WPS 协作群的机器人设置中获取 Webhook 地址',
+  'push-lark-url': '在飞书群设置 → 群机器人 → 自定义机器人中获取',
+  'push-lark-secret': '如果飞书机器人开启了签名校验，填入密钥；未开启则留空',
+  'push-wecom-url': '在企业微信群 → 添加群机器人后获取 Webhook 地址',
+  'push-tg-token': '通过 Telegram 的 @BotFather 创建机器人后获取',
+  'push-tg-chatid': '目标群组或频道的 ID，可通过 @userinfobot 获取',
+  'cfg-max-age': '只抓取最近这么多小时内发布的文章，更早的会被忽略',
+  'cfg-timeout': '访问每个信息源时的最长等待时间，网络慢时可适当增大',
+  'cfg-max-per-feed': '从每个信息源最多取多少条最新文章',
+  'cfg-db-path': '文章数据的本地存储位置，一般无需修改',
+};
+
+function injectHints() {
+  Object.entries(FIELD_HINTS).forEach(([id, text]) => {
+    const input = document.getElementById(id);
+    if (!input) return;
+    const fg = input.closest('.fg');
+    if (!fg || fg.querySelector('.fg-hint')) return;
+    const hint = document.createElement('div');
+    hint.className = 'fg-hint';
+    hint.textContent = text;
+    fg.appendChild(hint);
+  });
+}
+
+/* ── Dashboard status ────────────────── */
+function updateDashboard() {
+  const enabledFeeds = feeds.filter(f => f.enabled !== false).length;
+  const ssFeed = document.getElementById('ss-feeds');
+  const snFeed = document.getElementById('sn-feeds');
+  if (ssFeed) {
+    if (enabledFeeds > 0) {
+      ssFeed.textContent = `已配置 ${enabledFeeds} 个`;
+      ssFeed.className = 'step-status ok';
+      if (snFeed) snFeed.classList.add('done');
+    } else {
+      ssFeed.textContent = '未配置';
+      ssFeed.className = 'step-status';
+      if (snFeed) snFeed.classList.remove('done');
+    }
+  }
+
+  const apiKey = document.getElementById('cfg-api-key')?.value;
+  const ssModel = document.getElementById('ss-model');
+  const snModel = document.getElementById('sn-model');
+  if (ssModel) {
+    if (apiKey) {
+      ssModel.textContent = '已配置';
+      ssModel.className = 'step-status ok';
+      if (snModel) snModel.classList.add('done');
+    } else {
+      ssModel.textContent = '未配置';
+      ssModel.className = 'step-status';
+      if (snModel) snModel.classList.remove('done');
+    }
+  }
+
+  const enabled = settings.push?.enabled || [];
+  const ssPush = document.getElementById('ss-push');
+  const snPush = document.getElementById('sn-push');
+  if (ssPush) {
+    if (enabled.length > 0) {
+      ssPush.textContent = `已启用 ${enabled.length} 个`;
+      ssPush.className = 'step-status ok';
+      if (snPush) snPush.classList.add('done');
+    } else {
+      ssPush.textContent = '未配置';
+      ssPush.className = 'step-status';
+      if (snPush) snPush.classList.remove('done');
+    }
+  }
+}
+
 /* ── Init ──────────────────────────────── */
 loadStats();
-loadFeeds();
-loadSettings().then(syncChannelBlocks);
+Promise.all([loadFeeds(), loadSettings()]).then(() => {
+  syncChannelBlocks();
+  injectHints();
+  updateDashboard();
+});
 </script>
 </body>
 </html>
