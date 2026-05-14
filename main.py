@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import logging
+import re
 
 from src.config import read_feeds, read_settings
 from src.db import NewsDB
@@ -65,18 +66,24 @@ async def push_digest(digest: str, settings: dict):
     return results
 
 
+def _extract_urls(text: str) -> set[str]:
+    urls = re.findall(r'https?://[^\s\)\]>"\']+', text)
+    return {url.rstrip('.,;:') for url in urls}
+
+
 async def run(args):
     settings = read_settings()
     fetch_settings = settings["fetch"]
     all_feeds = read_feeds()
 
     db = NewsDB(settings["database"]["path"])
+    max_age_hours = fetch_settings["max_age_hours"]
 
     active_feeds = [f for f in all_feeds if f.get("enabled", True)]
     logger.info("Fetching feeds (%d/%d enabled)...", len(active_feeds), len(all_feeds))
     articles = await fetch_all_feeds(
         feeds=active_feeds,
-        max_age_hours=fetch_settings["max_age_hours"],
+        max_age_hours=max_age_hours,
         timeout=fetch_settings["timeout_seconds"],
         max_per_feed=fetch_settings["max_articles_per_feed"],
     )
@@ -92,28 +99,37 @@ async def run(args):
                     source=article.source,
                     category=article.category,
                     published_at=article.published_at,
+                    summary=article.content,
                 )
             new_articles.append(article)
 
     logger.info("New articles after dedup: %d", len(new_articles))
-    for i, a in enumerate(new_articles, 1):
-        logger.debug("  [%d] 【%s】%s", i, a.source, a.title)
 
-    if not new_articles:
-        logger.info("No new articles. Done.")
+    if args.dry_run:
+        candidate_dicts = [
+            {
+                "url": a.url,
+                "title": a.title,
+                "source": a.source,
+                "category": a.category,
+                "summary": a.content,
+            }
+            for a in new_articles
+        ]
+    else:
+        candidate_dicts = db.get_unpushed_recent(max_age_hours)
+
+    if not candidate_dicts:
+        logger.info("No articles to process. Done.")
         db.close()
         return
 
-    article_dicts = [
-        {
-            "url": a.url,
-            "title": a.title,
-            "source": a.source,
-            "category": a.category,
-            "summary": a.content,
-        }
-        for a in new_articles
-    ]
+    retry_count = len(candidate_dicts) - len(new_articles) if not args.dry_run else 0
+    if retry_count > 0:
+        logger.info(
+            "Candidates: %d total (%d new + %d previously unsent)",
+            len(candidate_dicts), len(new_articles), retry_count,
+        )
 
     if not args.no_summary:
         summarizer_cfg = settings["summarizer"]
@@ -123,7 +139,7 @@ async def run(args):
         model = provider_cfg.get("model", summarizer_cfg.get("model", ""))
         logger.info(
             "Generating digest with %s/%s (%d articles -> top %d)...",
-            provider, model, len(article_dicts), top_n,
+            provider, model, len(candidate_dicts), top_n,
         )
         summarizer = Summarizer(
             provider=provider,
@@ -131,9 +147,9 @@ async def run(args):
             api_key=provider_cfg.get("api_key", ""),
             base_url=provider_cfg.get("base_url", ""),
         )
-        digest = summarizer.generate_digest(article_dicts, top_n=top_n)
+        digest = summarizer.generate_digest(candidate_dicts, top_n=top_n)
     else:
-        digest = _plain_digest(article_dicts)
+        digest = _plain_digest(candidate_dicts)
 
     if args.dry_run:
         print("\n" + "=" * 60)
@@ -141,9 +157,18 @@ async def run(args):
         print("=" * 60 + "\n")
     else:
         await push_digest(digest, settings)
-        for a in new_articles:
-            db.mark_pushed(a.url)
-        logger.info("Pushed digest (%d articles fed, top N selected by AI)", len(new_articles))
+        if args.no_summary:
+            for a in candidate_dicts:
+                db.mark_pushed(a["url"])
+            logger.info("Marked all %d articles as pushed", len(candidate_dicts))
+        else:
+            selected_urls = _extract_urls(digest)
+            marked = 0
+            for a in candidate_dicts:
+                if a["url"] in selected_urls:
+                    db.mark_pushed(a["url"])
+                    marked += 1
+            logger.info("Marked %d/%d articles as pushed (AI selected)", marked, len(candidate_dicts))
 
     db.close()
 
