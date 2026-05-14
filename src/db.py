@@ -76,6 +76,16 @@ class NewsDB:
         )
         self.conn.commit()
 
+    def get_recently_pushed(self, hours: int = 48) -> list[dict]:
+        cur = self.conn.execute(
+            """SELECT title, source FROM articles
+               WHERE pushed_at IS NOT NULL
+               AND pushed_at >= datetime('now', ?)
+               ORDER BY pushed_at DESC""",
+            (f'-{hours} hours',),
+        )
+        return [dict(row) for row in cur.fetchall()]
+
     def get_unpushed_recent(self, max_age_hours: int = 24) -> list[dict]:
         cur = self.conn.execute(
             """SELECT url, title, source, category, published_at, summary

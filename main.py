@@ -141,13 +141,16 @@ async def run(args):
             "Generating digest with %s/%s (%d articles -> top %d)...",
             provider, model, len(candidate_dicts), top_n,
         )
+        recently_pushed = db.get_recently_pushed(max_age_hours * 2)
+        if recently_pushed:
+            logger.info("Excluding %d recently pushed articles from selection", len(recently_pushed))
         summarizer = Summarizer(
             provider=provider,
             model=model,
             api_key=provider_cfg.get("api_key", ""),
             base_url=provider_cfg.get("base_url", ""),
         )
-        digest = summarizer.generate_digest(candidate_dicts, top_n=top_n)
+        digest = summarizer.generate_digest(candidate_dicts, top_n=top_n, already_pushed=recently_pushed)
     else:
         digest = _plain_digest(candidate_dicts)
 
