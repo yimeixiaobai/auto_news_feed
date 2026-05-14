@@ -43,6 +43,8 @@ def read_settings() -> dict:
         "ANTHROPIC_BASE_URL": ("summarizer", "anthropic", "base_url"),
         "OPENAI_API_KEY": ("summarizer", "openai", "api_key"),
         "OPENAI_BASE_URL": ("summarizer", "openai", "base_url"),
+        "OPENAI_MODEL": ("summarizer", "openai", "model"),
+        "ANTHROPIC_MODEL": ("summarizer", "anthropic", "model"),
         "TELEGRAM_BOT_TOKEN": ("push", "telegram", "bot_token"),
         "TELEGRAM_CHAT_ID": ("push", "telegram", "chat_id"),
         "BARK_DEVICE_KEY": ("push", "bark", "device_key"),
