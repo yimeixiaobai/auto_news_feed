@@ -13,7 +13,19 @@
 
 ## 快速开始
 
-### 1. 安装依赖
+### 方式一：一键配置（推荐）
+
+```bash
+git clone https://github.com/yimeixiaobai/auto_news_feed.git
+cd auto_news_feed
+bash setup.sh
+```
+
+脚本会引导你完成：环境安装 → AI 模型配置 → 推送渠道配置 → 测试运行。如果本地安装了 `gh` (GitHub CLI)，还能一键同步 Secrets 到 GitHub Actions。
+
+### 方式二：手动配置
+
+**1. 安装依赖**
 
 ```bash
 python3 -m venv .venv
@@ -21,7 +33,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. 启动 Web 控制台
+**2. 启动 Web 控制台**
 
 ```bash
 python -m uvicorn server:app --host 127.0.0.1 --port 8000
@@ -34,7 +46,7 @@ python -m uvicorn server:app --host 127.0.0.1 --port 8000
 3. **设置推送渠道** — 选择飞书、企业微信等接收方式
 4. **手动运行** — 点击「立即运行」验证全流程
 
-### 3. 命令行运行
+**3. 命令行运行**
 
 ```bash
 # 预览模式：抓取 + 摘要，输出到终端，不推送
