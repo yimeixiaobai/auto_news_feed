@@ -18,8 +18,9 @@ push:
     webhook_url: ''
 summarizer:
   provider: anthropic
-  top_n: 15
+  top_n: 10
   language: zh-CN
+  keywords: []
   anthropic:
     api_key: ''
     base_url: ''

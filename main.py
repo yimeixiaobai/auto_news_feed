@@ -150,9 +150,16 @@ async def run(args):
             api_key=provider_cfg.get("api_key", ""),
             base_url=provider_cfg.get("base_url", ""),
         )
-        digest = summarizer.generate_digest(candidate_dicts, top_n=top_n, already_pushed=recently_pushed)
+        keywords = summarizer_cfg.get("keywords", [])
+        if keywords:
+            logger.info("User keywords: %s", ", ".join(keywords))
+        digest = summarizer.generate_digest(candidate_dicts, top_n=top_n, already_pushed=recently_pushed, keywords=keywords)
     else:
         digest = _plain_digest(candidate_dicts)
+
+    if not args.dry_run:
+        digest_id = db.save_digest(digest, article_count=len(candidate_dicts))
+        logger.info("Digest saved (id=%d)", digest_id)
 
     if args.dry_run:
         print("\n" + "=" * 60)

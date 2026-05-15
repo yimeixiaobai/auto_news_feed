@@ -274,6 +274,29 @@ def get_stats():
         return {"total": 0, "pushed": 0, "summarized": 0, "sources": 0}
 
 
+# ── digests ──────────────────────────────────────────────
+
+@app.get("/api/digests")
+def get_digests(limit: int = 30, offset: int = 0):
+    try:
+        db = NewsDB(read_settings()["database"]["path"])
+        digests, total = db.get_digests(limit, offset)
+        db.close()
+        return {"digests": digests, "total": total}
+    except Exception:
+        return {"digests": [], "total": 0}
+
+
+@app.get("/api/digests/{digest_id}")
+def get_digest(digest_id: int):
+    db = NewsDB(read_settings()["database"]["path"])
+    digest = db.get_digest_by_id(digest_id)
+    db.close()
+    if not digest:
+        raise HTTPException(404, "Digest not found")
+    return digest
+
+
 # ── manual run ────────────────────────────────────────────
 
 @app.post("/api/run")

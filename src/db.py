@@ -28,6 +28,13 @@ class NewsDB:
             );
             CREATE INDEX IF NOT EXISTS idx_url_hash ON articles(url_hash);
             CREATE INDEX IF NOT EXISTS idx_created_at ON articles(created_at);
+
+            CREATE TABLE IF NOT EXISTS digests (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                content TEXT NOT NULL,
+                article_count INTEGER DEFAULT 0,
+                created_at TEXT DEFAULT (datetime('now'))
+            );
         """)
         self.conn.commit()
 
@@ -105,6 +112,31 @@ class NewsDB:
             (limit,),
         )
         return [dict(row) for row in cur.fetchall()]
+
+    def save_digest(self, content: str, article_count: int = 0) -> int:
+        cur = self.conn.execute(
+            "INSERT INTO digests (content, article_count) VALUES (?, ?)",
+            (content, article_count),
+        )
+        self.conn.commit()
+        return cur.lastrowid
+
+    def get_digests(self, limit: int = 30, offset: int = 0) -> tuple[list[dict], int]:
+        cur = self.conn.execute("SELECT COUNT(*) as total FROM digests")
+        total = cur.fetchone()["total"]
+        cur = self.conn.execute(
+            "SELECT id, article_count, created_at FROM digests ORDER BY created_at DESC LIMIT ? OFFSET ?",
+            (limit, offset),
+        )
+        return [dict(row) for row in cur.fetchall()], total
+
+    def get_digest_by_id(self, digest_id: int) -> dict | None:
+        cur = self.conn.execute(
+            "SELECT id, content, article_count, created_at FROM digests WHERE id = ?",
+            (digest_id,),
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
 
     def close(self):
         self.conn.close()
