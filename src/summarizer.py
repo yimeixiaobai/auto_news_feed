@@ -115,7 +115,7 @@ class Summarizer:
                     articles=article_text,
                     already_pushed=pushed_section,
                 ),
-                max_tokens=3000,
+                max_tokens=8000,
             )
         except Exception as e:
             logger.error("Digest generation failed: %s", e)
